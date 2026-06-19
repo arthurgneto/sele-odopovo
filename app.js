@@ -23,6 +23,9 @@
   let selectedCoach = null;
   let activeSlotId = null;
 
+  // Jogadores carregados do Supabase (substitui o array estático do data.js)
+  let PLAYERS = [];
+
   // Cache local dos totais (carregado do Supabase)
   let playerVoteTotals = {};  // { [player_id]: { name, pos, total_votes } }
   let coachVoteTotals  = {};  // { [coach_id]:  { name, total_votes } }
@@ -59,6 +62,15 @@
   // =========================================================
   async function loadVoteData() {
     try {
+      // Carrega jogadores do Supabase (substituindo o data.js estático)
+      const { data: playersData, error: playersError } = await sb
+        .from("players")
+        .select("*")
+        .order("name");
+
+      if (playersError) throw playersError;
+      PLAYERS = playersData || [];
+
       // Total de votos
       const { data: countData } = await sb
         .from("vote_count")
@@ -68,11 +80,11 @@
       $("#stat-votos").textContent = totalVotes;
 
       // Totais por jogador
-      const { data: players } = await sb
+      const { data: votes } = await sb
         .from("player_vote_totals")
         .select("*");
       playerVoteTotals = {};
-      (players || []).forEach(p => {
+      (votes || []).forEach(p => {
         playerVoteTotals[p.player_id] = p;
       });
 

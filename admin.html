@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin — Seleção do Povo</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  /* ── tokens ── */
+  :root {
+    --verde:    #009C3B;
+    --amarelo:  #FFDF00;
+    --azul:     #002776;
+    --bg:       #0d1117;
+    --surface:  #161b22;
+    --border:   #30363d;
+    --text:     #e6edf3;
+    --muted:    #8b949e;
+    --danger:   #f85149;
+    --success:  #3fb950;
+    --radius:   8px;
+    --font:     'Segoe UI', system-ui, sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── header ── */
+  header {
+    background: var(--azul);
+    border-bottom: 3px solid var(--amarelo);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  header .flag { font-size: 24px; }
+  header h1 { font-size: 17px; font-weight: 700; color: var(--amarelo); letter-spacing: .5px; }
+  header p  { font-size: 12px; color: #aac4ff; margin-top: 1px; }
+  .badge-admin {
+    margin-left: auto;
+    background: var(--amarelo);
+    color: var(--azul);
+    font-size: 11px;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+  }
+
+  /* ── layout ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 0;
+    min-height: calc(100vh - 64px);
+  }
+
+  /* ── sidebar ── */
+  aside {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  aside h2 { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px; }
+
+  .pos-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    padding: 9px 12px;
+    cursor: pointer;
+    color: var(--text);
+    font-size: 13px;
+    text-align: left;
+    transition: all .15s;
+    width: 100%;
+  }
+  .pos-btn:hover  { background: rgba(255,255,255,.06); border-color: var(--border); }
+  .pos-btn.active { background: rgba(0,156,59,.15); border-color: var(--verde); color: #7ee787; }
+  .pos-btn .pos-tag {
+    background: var(--border);
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    min-width: 38px;
+    text-align: center;
+  }
+  .pos-btn.active .pos-tag { background: var(--verde); color: #fff; }
+  .pos-btn .pos-count {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
+
+  /* ── main ── */
+  main { display: flex; flex-direction: column; }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-wrap: wrap;
+  }
+  .toolbar h2 { font-size: 15px; font-weight: 700; flex: 1; }
+  .toolbar p  { font-size: 12px; color: var(--muted); }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 7px 12px;
+    flex: 1;
+    max-width: 320px;
+  }
+  .search-box input {
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    width: 100%;
+  }
+  .search-box input::placeholder { color: var(--muted); }
+
+  /* buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: filter .15s, opacity .15s;
+    white-space: nowrap;
+  }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-primary  { background: var(--verde); color: #fff; }
+  .btn-primary:hover:not(:disabled) { filter: brightness(1.12); }
+  .btn-danger   { background: var(--danger); color: #fff; }
+  .btn-danger:hover:not(:disabled) { filter: brightness(1.12); }
+  .btn-ghost    { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,.07); }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+  /* ── table ── */
+  .table-wrap {
+    flex: 1;
+    overflow: auto;
+    padding: 20px 24px;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr { border-bottom: 1px solid rgba(48,54,61,.6); transition: background .1s; }
+  tbody tr:hover { background: rgba(255,255,255,.03); }
+  tbody td { padding: 10px 12px; vertical-align: middle; }
+  .cell-name { font-weight: 600; }
+  .cell-club { color: var(--muted); font-size: 12px; }
+  .pos-pill {
+    display: inline-block;
+    background: var(--border);
+    color: var(--text);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: .5px;
+  }
+  .vote-count { font-variant-numeric: tabular-nums; color: var(--amarelo); font-weight: 700; }
+  .actions { display: flex; gap: 6px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+
+  /* ── modal ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    width: 420px;
+    max-width: 95vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  }
+  .modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 20px; color: var(--amarelo); }
+
+  .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 16px; }
+  .field label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .5px; text-transform: uppercase; }
+  .field input,
+  .field select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 14px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color .15s;
+    width: 100%;
+  }
+  .field input:focus,
+  .field select:focus { border-color: var(--verde); }
+  .field select option { background: var(--surface); }
+
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+  /* ── toast ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 13px;
+    color: var(--text);
+    opacity: 0;
+    transition: opacity .25s, transform .25s;
+    pointer-events: none;
+    z-index: 200;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: var(--success); color: var(--success); }
+  .toast.error   { border-color: var(--danger);  color: var(--danger); }
+
+  /* ── loading ── */
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,.2);
+    border-top-color: var(--verde);
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .status-bar {
+    padding: 8px 24px;
+    background: rgba(0,39,118,.2);
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="flag">🇧🇷</span>
+  <div>
+    <h1>Seleção do Povo</h1>
+    <p>Painel de administração de jogadores</p>
+  </div>
+  <span class="badge-admin">ADMIN</span>
+</header>
+
+<div class="layout">
+
+  <!-- Sidebar: posições -->
+  <aside>
+    <h2>Posição</h2>
+    <button class="pos-btn active" data-pos="ALL">
+      <span class="pos-tag">TODOS</span>
+      Todos os jogadores
+      <span class="pos-count" id="cnt-ALL">—</span>
+    </button>
+    <hr class="divider">
+    <button class="pos-btn" data-pos="GOL"><span class="pos-tag">GOL</span>Goleiro<span class="pos-count" id="cnt-GOL">—</span></button>
+    <button class="pos-btn" data-pos="LD"> <span class="pos-tag">LD</span> Lateral-Direito<span class="pos-count" id="cnt-LD">—</span></button>
+    <button class="pos-btn" data-pos="ZAG"><span class="pos-tag">ZAG</span>Zagueiro<span class="pos-count" id="cnt-ZAG">—</span></button>
+    <button class="pos-btn" data-pos="LE"> <span class="pos-tag">LE</span> Lateral-Esquerdo<span class="pos-count" id="cnt-LE">—</span></button>
+    <button class="pos-btn" data-pos="VOL"><span class="pos-tag">VOL</span>Volante<span class="pos-count" id="cnt-VOL">—</span></button>
+    <button class="pos-btn" data-pos="MEI"><span class="pos-tag">MEI</span>Meia<span class="pos-count" id="cnt-MEI">—</span></button>
+    <button class="pos-btn" data-pos="PD"> <span class="pos-tag">PD</span> Ponta-Direita<span class="pos-count" id="cnt-PD">—</span></button>
+    <button class="pos-btn" data-pos="PE"> <span class="pos-tag">PE</span> Ponta-Esquerda<span class="pos-count" id="cnt-PE">—</span></button>
+    <button class="pos-btn" data-pos="ATA"><span class="pos-tag">ATA</span>Atacante<span class="pos-count" id="cnt-ATA">—</span></button>
+  </aside>
+
+  <!-- Main -->
+  <main>
+    <div class="toolbar">
+      <h2 id="toolbar-title">Todos os jogadores</h2>
+      <div class="search-box">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="search-input" placeholder="Buscar por nome ou clube…" />
+      </div>
+      <button class="btn btn-primary" id="btn-add">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        Novo jogador
+      </button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Posição</th>
+            <th>Clube</th>
+            <th>Votos</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr><td colspan="5"><div class="empty-state"><span class="spinner"></span><br><br>Carregando…</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="status-bar">
+      <span id="status-text">Conectando ao Supabase…</span>
+    </div>
+  </main>
+</div>
+
+<!-- Modal: adicionar / editar jogador -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">Novo jogador</h3>
+
+    <div class="field">
+      <label>Nome completo</label>
+      <input type="text" id="f-name" placeholder="ex: Vinicius Jr." />
+    </div>
+
+    <div class="field">
+      <label>Posição</label>
+      <select id="f-pos">
+        <option value="GOL">GOL — Goleiro</option>
+        <option value="LD">LD — Lateral-Direito</option>
+        <option value="ZAG">ZAG — Zagueiro</option>
+        <option value="LE">LE — Lateral-Esquerdo</option>
+        <option value="VOL">VOL — Volante</option>
+        <option value="MEI">MEI — Meia</option>
+        <option value="PD">PD — Ponta-Direita</option>
+        <option value="PE">PE — Ponta-Esquerda</option>
+        <option value="ATA">ATA — Atacante</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Clube (com país)</label>
+      <input type="text" id="f-club" placeholder="ex: Real Madrid (ESP)" />
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="modal-cancel">Cancelar</button>
+      <button class="btn btn-primary" id="modal-save">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: confirmação de exclusão -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal">
+    <h3>Remover jogador?</h3>
+    <p style="color:var(--muted);line-height:1.6;margin-bottom:8px;">
+      Esta ação não pode ser desfeita.<br>
+      Os votos que incluem este jogador <strong style="color:var(--text)">continuam no banco</strong> — apenas o cadastro do jogador será removido.
+    </p>
+    <p id="confirm-player-name" style="font-size:16px;font-weight:700;color:var(--danger);margin-top:12px;"></p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="confirm-cancel">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-ok">Sim, remover</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// =========================================================
+// CONFIGURAÇÃO — substitua com suas credenciais Supabase
+// =========================================================
+const SUPABASE_URL     = "https://SEU_PROJECT_ID.supabase.co";
+const SUPABASE_ANON_KEY = "SUA_ANON_KEY_AQUI";
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── estado ──
+let allPlayers    = [];   // dados vindos do Supabase
+let voteTotals    = {};   // { player_id: total_votes }
+let currentPos    = "ALL";
+let editingId     = null; // null = novo, string = editar
+let deleteTarget  = null;
+
+// ── utils ──
+const $  = id => document.getElementById(id);
+const qs = sel => document.querySelector(sel);
+
+let toastTimer;
+function toast(msg, type = "success") {
+  const el = $("toast");
+  el.textContent = msg;
+  el.className = `toast ${type} show`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 3000);
+}
+function setStatus(msg) { $("status-text").textContent = msg; }
+
+// ── gerador de ID (mesmo padrão do data.js) ──
+function makeId(name, index) {
+  return name.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-") + "-" + index;
+}
+
+// =========================================================
+// CARREGAR DADOS
+// =========================================================
+async function loadAll() {
+  setStatus("Carregando jogadores…");
+
+  const [{ data: players, error }, { data: votes }] = await Promise.all([
+    sb.from("players").select("*").order("name"),
+    sb.from("player_vote_totals").select("player_id, total_votes")
+  ]);
+
+  if (error) {
+    setStatus("Erro: " + error.message);
+    toast("Erro ao carregar jogadores: " + error.message, "error");
+    return;
+  }
+
+  allPlayers = players || [];
+  voteTotals = {};
+  (votes || []).forEach(v => { voteTotals[v.player_id] = v.total_votes; });
+
+  updateCounts();
+  renderTable();
+  setStatus(`${allPlayers.length} jogadores carregados.`);
+}
+
+// ── contadores sidebar ──
+function updateCounts() {
+  const positions = ["GOL","LD","ZAG","LE","VOL","MEI","PD","PE","ATA"];
+  $("cnt-ALL").textContent = allPlayers.length;
+  positions.forEach(pos => {
+    const el = $("cnt-" + pos);
+    if (el) el.textContent = allPlayers.filter(p => p.pos === pos).length;
+  });
+}
+
+// =========================================================
+// RENDERIZAR TABELA
+// =========================================================
+function renderTable() {
+  const query = $("search-input").value.trim().toLowerCase();
+  let rows = allPlayers;
+
+  if (currentPos !== "ALL") rows = rows.filter(p => p.pos === currentPos);
+  if (query) rows = rows.filter(p =>
+    p.name.toLowerCase().includes(query) ||
+    (p.club || "").toLowerCase().includes(query)
+  );
+
+  const tbody = $("table-body");
+
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5">
+      <div class="empty-state">
+        <div class="icon">⚽</div>
+        <p>Nenhum jogador encontrado.</p>
+      </div>
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(p => {
+    const votes = voteTotals[p.id] || 0;
+    return `
+      <tr>
+        <td class="cell-name">${esc(p.name)}</td>
+        <td><span class="pos-pill">${esc(p.pos)}</span></td>
+        <td class="cell-club">${esc(p.club || "—")}</td>
+        <td class="vote-count">${votes > 0 ? votes : '<span style="color:var(--muted)">0</span>'}</td>
+        <td class="actions">
+          <button class="btn btn-ghost btn-sm" onclick="openEdit('${p.id}')">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="openDelete('${p.id}')">Remover</button>
+        </td>
+      </tr>`;
+  }).join("");
+}
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// =========================================================
+// MODAL ADICIONAR / EDITAR
+// =========================================================
+function openAdd() {
+  editingId = null;
+  $("modal-title").textContent = "Novo jogador";
+  $("f-name").value = "";
+  $("f-club").value = "";
+  $("f-pos").value  = currentPos !== "ALL" ? currentPos : "GOL";
+  $("modal").classList.add("open");
+  setTimeout(() => $("f-name").focus(), 60);
+}
+
+function openEdit(id) {
+  const p = allPlayers.find(x => x.id === id);
+  if (!p) return;
+  editingId = id;
+  $("modal-title").textContent = "Editar jogador";
+  $("f-name").value = p.name;
+  $("f-club").value = p.club || "";
+  $("f-pos").value  = p.pos;
+  $("modal").classList.add("open");
+  setTimeout(() => $("f-name").focus(), 60);
+}
+
+function closeModal() {
+  $("modal").classList.remove("open");
+  editingId = null;
+}
+
+async function savePlayer() {
+  const name = $("f-name").value.trim();
+  const club = $("f-club").value.trim();
+  const pos  = $("f-pos").value;
+
+  if (!name) { toast("Informe o nome do jogador.", "error"); return; }
+  if (!club) { toast("Informe o clube do jogador.", "error"); return; }
+
+  const btn = $("modal-save");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Salvando…';
+
+  try {
+    if (editingId) {
+      // ── editar
+      const { error } = await sb
+        .from("players")
+        .update({ name, club, pos })
+        .eq("id", editingId);
+      if (error) throw error;
+      toast(`${name} atualizado com sucesso.`);
+    } else {
+      // ── novo: gera id único
+      const tempIndex = Date.now();
+      const newId = makeId(name, tempIndex);
+      const { error } = await sb
+        .from("players")
+        .insert([{ id: newId, name, club, pos }]);
+      if (error) throw error;
+      toast(`${name} adicionado!`);
+    }
+
+    closeModal();
+    await loadAll();
+  } catch (err) {
+    toast("Erro: " + err.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Salvar";
+  }
+}
+
+// =========================================================
+// MODAL CONFIRMAR EXCLUSÃO
+// =========================================================
+function openDelete(id) {
+  const p = allPlayers.find(x => x.id === id);
+  if (!p) return;
+  deleteTarget = id;
+  $("confirm-player-name").textContent = p.name + " (" + p.pos + ")";
+  $("modal-confirm").classList.add("open");
+}
+
+function closeConfirm() {
+  $("modal-confirm").classList.remove("open");
+  deleteTarget = null;
+}
+
+async function deletePlayer() {
+  if (!deleteTarget) return;
+
+  const btn = $("confirm-ok");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Removendo…';
+
+  try {
+    const { error } = await sb
+      .from("players")
+      .delete()
+      .eq("id", deleteTarget);
+    if (error) throw error;
+
+    const p = allPlayers.find(x => x.id === deleteTarget);
+    toast(`${p?.name || "Jogador"} removido.`);
+    closeConfirm();
+    await loadAll();
+  } catch (err) {
+    toast("Erro: " + err.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Sim, remover";
+  }
+}
+
+// =========================================================
+// EVENTOS
+// =========================================================
+document.querySelectorAll(".pos-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".pos-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentPos = btn.dataset.pos;
+    $("toolbar-title").textContent =
+      currentPos === "ALL" ? "Todos os jogadores" : btn.querySelector(":not(.pos-tag):not(.pos-count)").textContent.trim();
+    renderTable();
+  });
+});
+
+$("search-input").addEventListener("input", renderTable);
+$("btn-add").addEventListener("click", openAdd);
+$("modal-cancel").addEventListener("click", closeModal);
+$("modal-save").addEventListener("click", savePlayer);
+$("confirm-cancel").addEventListener("click", closeConfirm);
+$("confirm-ok").addEventListener("click", deletePlayer);
+
+$("modal").addEventListener("click", e => { if (e.target === $("modal")) closeModal(); });
+$("modal-confirm").addEventListener("click", e => { if (e.target === $("modal-confirm")) closeConfirm(); });
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") { closeModal(); closeConfirm(); }
+});
+
+// ── Enter no modal salva ──
+["f-name","f-club","f-pos"].forEach(id => {
+  $(id)?.addEventListener("keydown", e => { if (e.key === "Enter") savePlayer(); });
+});
+
+// ── start ──
+loadAll();
+</script>
+
+<!--
+  ═══════════════════════════════════════════════════════
+  ATENÇÃO: para que esta tela funcione você precisa:
+
+  1. Rodar o SQL abaixo no Supabase (cria a tabela `players`
+     separada do data.js, para gerenciar via admin):
+
+  CREATE TABLE IF NOT EXISTS players (
+    id    TEXT PRIMARY KEY,
+    name  TEXT NOT NULL,
+    pos   TEXT NOT NULL,
+    club  TEXT NOT NULL DEFAULT ''
+  );
+
+  ALTER TABLE players ENABLE ROW LEVEL SECURITY;
+  CREATE POLICY "read_players" ON players FOR SELECT TO anon USING (true);
+  -- Apenas autenticados podem inserir/editar/deletar:
+  -- (se quiser deixar aberto para anon também, ajuste abaixo)
+  CREATE POLICY "write_players" ON players FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+  2. Substituir SUPABASE_URL e SUPABASE_ANON_KEY no topo do <script>.
+
+  3. Migrar os jogadores do data.js para o Supabase (ver migration.sql).
+
+  4. Adaptar o app.js para buscar jogadores do Supabase em vez do data.js
+     (ver nota no LEIA-ME.md).
+  ═══════════════════════════════════════════════════════
+-->
+</body>
+</html>
