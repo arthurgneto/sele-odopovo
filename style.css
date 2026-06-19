@@ -515,13 +515,13 @@ button { font-family: inherit; cursor: pointer; }
   align-items: center;
   gap: 4px;
   cursor: pointer;
-  width: 78px;
+  width: 92px;
   z-index: 2;
 }
 
 .slot-circle {
-  width: 52px;
-  height: 52px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   background: rgba(37,68,113,0.85);
   border: 2.5px dashed rgba(255,255,255,0.35);
@@ -529,7 +529,7 @@ button { font-family: inherit; cursor: pointer; }
   align-items: center;
   justify-content: center;
   font-family: var(--font-display);
-  font-size: 11px;
+  font-size: 13px;
   color: var(--cinza-texto);
   text-align: center;
   transition: border-color 0.15s, background 0.15s, transform 0.12s;
@@ -546,18 +546,18 @@ button { font-family: inherit; cursor: pointer; }
   border-color: var(--amarelo);
   background: var(--azul);
   color: var(--branco);
-  font-size: 18px;
+  font-size: 22px;
 }
 
 .slot-label {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--branco);
   background: rgba(0,0,0,0.55);
   padding: 2px 7px;
   border-radius: 100px;
   white-space: nowrap;
-  max-width: 90px;
+  max-width: 110px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -566,14 +566,14 @@ button { font-family: inherit; cursor: pointer; }
 
 .slot-rating {
   position: absolute;
-  bottom: -3px;
-  right: -3px;
+  bottom: -4px;
+  right: -4px;
   background: var(--amarelo);
   color: var(--fundo);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 800;
-  padding: 1px 4px;
-  border-radius: 6px;
+  padding: 2px 5px;
+  border-radius: 7px;
   border: 1.5px solid var(--fundo);
 }
 
@@ -905,10 +905,10 @@ button { font-family: inherit; cursor: pointer; }
 /* ===== UTIL ===== */
 @media (max-width: 600px) {
   .header-stats { display: none; }
-  .slot { width: 60px; }
-  .slot-circle { width: 42px; height: 42px; font-size: 9px; }
-  .slot.filled .slot-circle { font-size: 14px; }
-  .slot-label { font-size: 8.5px; max-width: 64px; }
+  .slot { width: 76px; }
+  .slot-circle { width: 52px; height: 52px; font-size: 11px; }
+  .slot.filled .slot-circle { font-size: 17px; }
+  .slot-label { font-size: 10.5px; max-width: 82px; }
 }
 /* ---- Múltiplas posições — badges no modal ---- */
 .player-pos-tags {

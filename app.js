@@ -501,11 +501,26 @@
 
     const formation = FORMATIONS[currentFormationKey];
 
+    // Ranking de cada categoria (defesa/meio/ataque), do mais votado ao menos votado
+    const rankingByCategory = {};
+    Object.values(playerVoteTotals).forEach((v) => {
+      const cat = POS_CATEGORY[v.player_pos];
+      if (!rankingByCategory[cat]) rankingByCategory[cat] = [];
+      rankingByCategory[cat].push(v);
+    });
+    Object.keys(rankingByCategory).forEach((cat) => {
+      rankingByCategory[cat].sort((a, b) => b.total_votes - a.total_votes);
+    });
+
+    // Controla quais jogadores já foram usados em alguma vaga (evita repetição)
+    const usedPlayerIds = new Set();
+
     formation.slots.forEach((slot) => {
-      // Encontra o jogador mais votado da posição
-      const best = Object.values(playerVoteTotals)
-        .filter((v) => POS_CATEGORY[v.player_pos] === POS_CATEGORY[slot.pos])
-        .sort((a, b) => b.total_votes - a.total_votes)[0];
+      const cat = POS_CATEGORY[slot.pos];
+      const candidates = rankingByCategory[cat] || [];
+      // Pega o jogador mais votado da categoria que ainda não foi usado em outra vaga
+      const best = candidates.find((v) => !usedPlayerIds.has(v.player_id));
+      if (best) usedPlayerIds.add(best.player_id);
 
       const el = document.createElement("div");
       el.className = "slot" + (best ? " filled" : "");
