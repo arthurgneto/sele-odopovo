@@ -69,7 +69,10 @@
         .order("name");
 
       if (playersError) throw playersError;
-      PLAYERS = playersData || [];
+      PLAYERS = (playersData || []).map(p => ({
+        ...p,
+        pos: Array.isArray(p.pos) ? p.pos : (p.pos ? p.pos.split(",").map(s => s.trim()) : []),
+      }));
 
       // Total de votos
       const { data: countData } = await sb
