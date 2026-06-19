@@ -287,7 +287,7 @@
     const list = $("#modal-list");
     const q = query.trim().toLowerCase();
     const candidates = PLAYERS
-      .filter((p) => p.pos === pos)
+      .filter((p) => (Array.isArray(p.pos) ? p.pos.includes(pos) : p.pos === pos))
       .filter((p) => !q || p.name.toLowerCase().includes(q) || p.club.toLowerCase().includes(q));
 
     if (candidates.length === 0) {
@@ -303,7 +303,7 @@
           '<div class="player-avatar">' + initialsOf(p.name) + '</div>' +
           '<div class="player-info">' +
             '<div class="player-name">' + p.name + '</div>' +
-            '<div class="player-club">' + p.club + (votes > 0 ? ' · <b>' + votes + ' votos</b>' : '') + '</div>' +
+            '<div class="player-club">' + p.club + (votes > 0 ? ' · <b>' + votes + ' votos</b>' : '') + '</div>' + (p.pos.length > 1 ? '<div class="player-pos-tags">' + p.pos.map(function(px){ return '<span class="pos-tag">' + px + '</span>'; }).join('') + '</div>' : '') +
           '</div>' +
         '</div>'
       );
@@ -422,7 +422,7 @@
         slot_id:     slotId,
         player_id:   player.id,
         player_name: player.name,
-        player_pos:  player.pos,
+        player_pos:  Array.isArray(player.pos) ? player.pos[0] : player.pos,
       }));
 
       const { error: playersError } = await sb
@@ -437,7 +437,7 @@
 
       Object.values(selectedSlots).forEach((player) => {
         if (!playerVoteTotals[player.id]) {
-          playerVoteTotals[player.id] = { player_id: player.id, player_name: player.name, player_pos: player.pos, total_votes: 0 };
+          playerVoteTotals[player.id] = { player_id: player.id, player_name: player.name, player_pos: Array.isArray(player.pos) ? player.pos[0] : player.pos, total_votes: 0 };
         }
         playerVoteTotals[player.id].total_votes++;
       });
@@ -504,7 +504,7 @@
     formation.slots.forEach((slot) => {
       // Encontra o jogador mais votado da posição
       const best = Object.values(playerVoteTotals)
-        .filter((v) => v.player_pos === slot.pos)
+        .filter((v) => { const p = PLAYERS.find(pl => pl.id === v.player_id); const positions = p ? (Array.isArray(p.pos) ? p.pos : [p.pos]) : [v.player_pos]; return positions.includes(slot.pos); })
         .sort((a, b) => b.total_votes - a.total_votes)[0];
 
       const el = document.createElement("div");
@@ -541,7 +541,7 @@
     const formation = FORMATIONS[currentFormationKey];
     const usedIds = new Set();
     formation.slots.forEach((slot) => {
-      const candidates = PLAYERS.filter((p) => p.pos === slot.pos && !usedIds.has(p.id));
+      const candidates = PLAYERS.filter((p) => (Array.isArray(p.pos) ? p.pos.includes(slot.pos) : p.pos === slot.pos) && !usedIds.has(p.id));
       if (candidates.length === 0) return;
       const pick = candidates[Math.floor(Math.random() * candidates.length)];
       usedIds.add(pick.id);

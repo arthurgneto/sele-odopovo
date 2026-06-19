@@ -910,3 +910,21 @@ button { font-family: inherit; cursor: pointer; }
   .slot.filled .slot-circle { font-size: 14px; }
   .slot-label { font-size: 8.5px; max-width: 64px; }
 }
+/* ---- Múltiplas posições — badges no modal ---- */
+.player-pos-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 3px;
+}
+.pos-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(255,215,0,.15);
+  color: var(--gold, #ffd700);
+  border: 1px solid rgba(255,215,0,.3);
+  letter-spacing: .5px;
+}
