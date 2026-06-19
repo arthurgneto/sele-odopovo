@@ -10,8 +10,8 @@
   // Substitua pelos seus valores do painel Supabase:
   // Project Settings → API
   // =========================================================
-  const SUPABASE_URL = "https://SEU_PROJECT_ID.supabase.co";
-  const SUPABASE_ANON_KEY = "SUA_ANON_KEY_AQUI";
+  const SUPABASE_URL = "https://nmhqragzhfkwjbvicrwx.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5taHFyYWd6aGZrd2pidmljcnd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MjIwNzksImV4cCI6MjA5NzM5ODA3OX0.vrJdST8s51aPKMNhWXgzqULg7eazzFoxLXeuw0a5hIw";
 
   // Cliente Supabase (via CDN — adicione o script no index.html)
   const { createClient } = supabase;
