@@ -72,7 +72,17 @@
     flex-direction: column;
     gap: 8px;
   }
-  aside h2 { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px; }
+  aside h2 {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 14px;
+    margin-bottom: 2px;
+    padding: 0 4px;
+  }
+  aside h2:first-of-type { margin-top: 4px; }
 
   .pos-btn {
     display: flex;
@@ -397,21 +407,28 @@
 
 <div class="layout">
 
-  <!-- Sidebar: posições -->
+  <!-- Sidebar: posições agrupadas por linha -->
   <aside>
-    <h2>Posição</h2>
     <button class="pos-btn active" data-pos="ALL">
       <span class="pos-tag">TODOS</span>
       Todos os jogadores
       <span class="pos-count" id="cnt-ALL">—</span>
     </button>
     <hr class="divider">
+
+    <h2>Goleiro</h2>
     <button class="pos-btn" data-pos="GOL"><span class="pos-tag">GOL</span>Goleiro<span class="pos-count" id="cnt-GOL">—</span></button>
+
+    <h2>Defensores</h2>
     <button class="pos-btn" data-pos="LD"> <span class="pos-tag">LD</span> Lateral-Direito<span class="pos-count" id="cnt-LD">—</span></button>
     <button class="pos-btn" data-pos="ZAG"><span class="pos-tag">ZAG</span>Zagueiro<span class="pos-count" id="cnt-ZAG">—</span></button>
     <button class="pos-btn" data-pos="LE"> <span class="pos-tag">LE</span> Lateral-Esquerdo<span class="pos-count" id="cnt-LE">—</span></button>
+
+    <h2>Meio-campo</h2>
     <button class="pos-btn" data-pos="VOL"><span class="pos-tag">VOL</span>Volante<span class="pos-count" id="cnt-VOL">—</span></button>
     <button class="pos-btn" data-pos="MEI"><span class="pos-tag">MEI</span>Meia<span class="pos-count" id="cnt-MEI">—</span></button>
+
+    <h2>Atacantes</h2>
     <button class="pos-btn" data-pos="PD"> <span class="pos-tag">PD</span> Ponta-Direita<span class="pos-count" id="cnt-PD">—</span></button>
     <button class="pos-btn" data-pos="PE"> <span class="pos-tag">PE</span> Ponta-Esquerda<span class="pos-count" id="cnt-PE">—</span></button>
     <button class="pos-btn" data-pos="ATA"><span class="pos-tag">ATA</span>Atacante<span class="pos-count" id="cnt-ATA">—</span></button>
