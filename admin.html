@@ -298,9 +298,92 @@
     align-items: center;
     gap: 8px;
   }
+
+  /* ── login screen ── */
+  #login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(0,156,59,.12), transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(0,39,118,.25), transparent 50%),
+      var(--bg);
+  }
+  #login-screen.hidden { display: none; }
+  .login-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 36px 32px;
+    width: 360px;
+    max-width: 90vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  }
+  .login-card .flag { font-size: 32px; display: block; text-align: center; margin-bottom: 8px; }
+  .login-card h1 { font-size: 18px; text-align: center; color: var(--amarelo); margin-bottom: 4px; }
+  .login-card p.sub { font-size: 12px; text-align: center; color: var(--muted); margin-bottom: 24px; }
+  .login-card .btn-primary { width: 100%; justify-content: center; padding: 10px; font-size: 14px; }
+  .login-error {
+    background: rgba(248,81,73,.1);
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    font-size: 12px;
+    padding: 8px 12px;
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    display: none;
+  }
+  .login-error.show { display: block; }
+
+  #app-screen.hidden { display: none; }
+
+  .user-chip {
+    margin-left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #aac4ff;
+  }
+  .btn-logout {
+    background: none;
+    border: 1px solid rgba(255,255,255,.25);
+    color: #aac4ff;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+  }
+  .btn-logout:hover { background: rgba(255,255,255,.1); }
 </style>
 </head>
 <body>
+
+<!-- ═══════════ TELA DE LOGIN ═══════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <span class="flag">🇧🇷</span>
+    <h1>Seleção do Povo</h1>
+    <p class="sub">Acesso restrito ao painel de administração</p>
+
+    <div class="login-error" id="login-error"></div>
+
+    <div class="field">
+      <label>E-mail</label>
+      <input type="email" id="login-email" placeholder="seu-email@exemplo.com" autocomplete="username" />
+    </div>
+    <div class="field">
+      <label>Senha</label>
+      <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+
+    <button class="btn btn-primary" id="login-btn">Entrar</button>
+  </div>
+</div>
+
+<!-- ═══════════ PAINEL ADMIN ═══════════ -->
+<div id="app-screen" class="hidden">
 
 <header>
   <span class="flag">🇧🇷</span>
@@ -308,6 +391,7 @@
     <h1>Seleção do Povo</h1>
     <p>Painel de administração de jogadores</p>
   </div>
+  <span class="user-chip" id="user-chip"></span>
   <span class="badge-admin">ADMIN</span>
 </header>
 
@@ -426,6 +510,8 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+</div><!-- /#app-screen -->
+
 <script>
 // =========================================================
 // CONFIGURAÇÃO — substitua com suas credenciais Supabase
@@ -463,6 +549,77 @@ function makeId(name, index) {
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-") + "-" + index;
 }
+
+// =========================================================
+// AUTENTICAÇÃO
+// =========================================================
+function showLogin(errorMsg) {
+  $("login-screen").classList.remove("hidden");
+  $("app-screen").classList.add("hidden");
+  const errEl = $("login-error");
+  if (errorMsg) {
+    errEl.textContent = errorMsg;
+    errEl.classList.add("show");
+  } else {
+    errEl.classList.remove("show");
+  }
+}
+
+function showApp(user) {
+  $("login-screen").classList.add("hidden");
+  $("app-screen").classList.remove("hidden");
+  $("user-chip").innerHTML = `${esc(user.email)} <button class="btn-logout" id="btn-logout">Sair</button>`;
+  $("btn-logout").addEventListener("click", logout);
+}
+
+async function login() {
+  const email = $("login-email").value.trim();
+  const password = $("login-password").value;
+  const btn = $("login-btn");
+
+  if (!email || !password) {
+    showLogin("Preencha e-mail e senha.");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Entrando…';
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+  btn.disabled = false;
+  btn.textContent = "Entrar";
+
+  if (error) {
+    showLogin(error.message === "Invalid login credentials"
+      ? "E-mail ou senha incorretos."
+      : error.message);
+    return;
+  }
+
+  showApp(data.user);
+  loadAll();
+}
+
+async function logout() {
+  await sb.auth.signOut();
+  showLogin();
+}
+
+async function checkSession() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    showApp(session.user);
+    loadAll();
+  } else {
+    showLogin();
+  }
+}
+
+$("login-btn").addEventListener("click", login);
+["login-email", "login-password"].forEach(id => {
+  $(id).addEventListener("keydown", e => { if (e.key === "Enter") login(); });
+});
 
 // =========================================================
 // CARREGAR DADOS
@@ -695,7 +852,7 @@ document.addEventListener("keydown", e => {
 });
 
 // ── start ──
-loadAll();
+checkSession();
 </script>
 
 <!--
